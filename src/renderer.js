@@ -85,14 +85,14 @@ const com = {
 function getInfo(path, tr) {
     tr.replaceChildren();
     report(path)
-        .then((urinoAnalyzes) => {
-            console.log(urinoAnalyzes)
+        .then((DingoAnalyzes) => {
+            console.log(DingoAnalyzes)
             let td = document.createElement('td');
             td.textContent = path;
             tr.appendChild(td);
-            for(let i=1; i<urinoAnalyzes.length-1;i++){
+            for(let i=1; i<DingoAnalyzes.length-1;i++){
                 td = document.createElement('td');
-                td.textContent = urinoAnalyzes[i];
+                td.textContent = DingoAnalyzes[i];
                 tr.appendChild(td);
             }
         })
@@ -103,17 +103,17 @@ function getInfo(path, tr) {
 }
 
 function report(path) {
-    var urinoAnalyzes
+    var DingoAnalyzes
     return new Promise((resolve, reject) => {
-        UrinoInit(path)
-            .then(() => getUrinoAnalyzes())
+        DingoInit(path)
+            .then(() => getDingoAnalyzes())
             .then(res => {
-                urinoAnalyzes = parseUrinoData(res);
-                return deleteUrinoResearches();
+                DingoAnalyzes = parseDingoData(res);
+                return deleteDingoResearches();
             })
             .then(() => {
                 port && port.close();
-                resolve(urinoAnalyzes);
+                resolve(DingoAnalyzes);
             })
             .catch(err => {
                 reject(err);
@@ -122,10 +122,10 @@ function report(path) {
     });
 }
 
-function UrinoInit(com) {
+function DingoInit(com) {
     console.log(com)
     return new Promise((resolve, reject) => {
-        //urinodev = { path: com };
+        //Dingodev = { path: com };
         openPort({ path: com })
             .then(serialPort => {
                 port = serialPort;
@@ -138,10 +138,10 @@ function UrinoInit(com) {
     });
 }
 
-function openPort(urinodev) {
-    console.log(urinodev)
+function openPort(Dingodev) {
+    console.log(Dingodev)
     return new Promise((resolve, reject) => {
-        var serialPort = new SerialPort({ path: urinodev.path, baudRate: 115200 })
+        var serialPort = new SerialPort({ path: Dingodev.path, baudRate: 115200 })
         const parser = serialPort.pipe(new DelimiterParser({ delimiter: '$END\r\n' }))
         parser.on('data', (data) => {
             let str = data.toString('utf8')
@@ -156,12 +156,12 @@ function openPort(urinodev) {
         serialPort.on('error', (err) => {
             console.log('serial port error: ' + err);
         });
-        setTimeout(() => reject({message:'Ошибка при открытии порта: ' + urinodev.path}), 2000)
+        setTimeout(() => reject({message:'Ошибка при открытии порта: ' + Dingodev.path}), 2000)
     });
 }
 
 
-function getUrinoAnalyzes() {
+function getDingoAnalyzes() {
     const getAnalyzesCommand = 0x04;
     return new Promise((resolve, reject) => {
         port.write("$i0000\r\n", err => {
@@ -177,7 +177,7 @@ function getUrinoAnalyzes() {
         });
     });
 };
-function deleteUrinoResearches() {
+function deleteDingoResearches() {
     return new Promise((resolve, reject) => {
         port.write("$U0000\r\n", err => {
             if (err) {
@@ -189,7 +189,7 @@ function deleteUrinoResearches() {
         });
     });
 };
-function parseUrinoData(data) {
+function parseDingoData(data) {
     if(data.length==10)
     {
         data[2]+=data[3];
