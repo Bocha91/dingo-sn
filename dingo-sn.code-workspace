@@ -1,0 +1,55 @@
+{
+	"folders": [
+		{
+			"path": "E:/PCAD/Nobilis/Dingo_E200/soft/dingo-sn"
+		}
+	],
+	"settings": {
+		"files.watcherExclude": {
+			"**/.git/objects/**": true,
+			"**/.git/subtree-cache/**": true,
+			"**/node_modules/*/**": true,
+			"**/.hg/store/**": true
+		},
+		"files.autoSave": "afterDelay",
+		"files.trimFinalNewlines": true,
+		"editor.trimAutoWhitespace": true,
+		//"extensions.autoUpdate": "onlyEnabledExtensions"
+		"workbench.colorCustomizations": {
+			"[Default Dark+]": {
+				// "titleBar.activeBackground": "#0029dd",
+				"titleBar.activeBackground": "#361e63",
+				"titleBar.activeForeground": "#fcfc00",
+				//"titleBar.inactiveBackground": "#98BF0C",
+				//"panel.background": "#000000",
+				"panel.background": "#101010",
+				//"editor.background": "#202124",
+				//"editor.foreground": "#E8EAED",
+				//"activityBar.background": "#2f0000",
+				//"activityBar.background":"#584b00",
+				"activityBar.background": "#053831", //"#5261c4", //#7f8101",
+				"activityBar.activeBackground": "#0cbf57",
+				"activityBar.foreground": "#fcfc00",
+				"statusBar.background": "#3a77d1",
+				"statusBar.foreground": "#FFFF00"
+				//"panel.border": "#00A9DD",
+				//"panelTitle.activeBorder": "#98BF0C",//#697EFF", //"#aeb100",
+				//"window.activeBorder": "#34B4E5",
+				//"window.inactiveBorder": "#7f8101",
+			},
+			"files.exclude": {
+				"node_module": true,
+				"**/.h_": true,
+				"**/.c_": true,
+				"**/.git": true,
+				"**/.svn": true,
+				"**/.hg": true,
+				"**/CVS": true,
+				"**/.DS_Store": true,
+				"**/Thumbs.db": true,
+				"main.c": true,
+				"adc.c": true,
+			},
+		},
+	}
+}
