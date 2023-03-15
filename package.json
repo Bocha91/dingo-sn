@@ -1,7 +1,7 @@
 {
   "name": "dingo-sn",
   "productName": "SN Dingo E200",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Getting SN from Dingo E200, and more",
   "main": "src/main.js",
   "scripts": {

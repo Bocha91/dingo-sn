@@ -1,7 +1,4 @@
-// This file is required by the index.html file and will
-// be executed in the renderer process for that window.
-// All of the Node.js APIs are available in this process.
-
+// SN Dingo E200-1.0.0
 const { SerialPort } = require('serialport')
 const { DelimiterParser } = require('@serialport/parser-delimiter')
 const EventEmitter = require('events');

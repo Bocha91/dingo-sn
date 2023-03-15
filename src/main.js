@@ -32,9 +32,9 @@ const createWindow = () => {
 
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools({
-  //   mode: "undocked"  /*'detach'*/
-  // });
+  mainWindow.webContents.openDevTools({
+    mode: "undocked"  /*'detach'*/
+  });
 };
 
 // This method will be called when Electron has finished
