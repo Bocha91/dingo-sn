@@ -44,7 +44,7 @@ const ports = [
     }
 ];
 */
-
+//test();
 listSerialPorts()
 
 async function listSerialPorts() {
@@ -105,23 +105,24 @@ function stop(com, tr) {
 async function start1(com, tr) {
     tr.replaceChildren();
     try {
-        let infoDingo = await dingoProcess(com);
+        let infoDingo = await dingoProcess(com,tr);
         console.log(infoDingo)
         console.log(serial)
-        let td = document.createElement('td');
-        td.textContent = com.path;
-        tr.appendChild(td);
 
-        for (let i = 2; i < 4; i++) {
-            td = document.createElement('td');
-            td.textContent = com.infoDingo[i]; 
-            tr.appendChild(td);
-        }
-        for (const analyzes of com.analyzes) {
-            td = document.createElement('td');
-            td.textContent = analyzes; 
-            tr.appendChild(td);
-        }
+        // let td = document.createElement('td');
+        // td.textContent = com.path;
+        // tr.appendChild(td);
+
+        // for (let i = 2; i < 4; i++) {
+        //     td = document.createElement('td');
+        //     td.textContent = com.infoDingo[i]; 
+        //     tr.appendChild(td);
+        // }
+        // for (const analyzes of com.analyzes) {
+        //     td = document.createElement('td');
+        //     td.textContent = analyzes; 
+        //     tr.appendChild(td);
+        // }
     } catch (err) {
         //document.getElementById('error').textContent = err.message;
         let divErr = document.getElementById('error')
@@ -132,75 +133,44 @@ async function start1(com, tr) {
     };
 }
 
-/*
-function start(com
-    //, tr
-    ) {
-    //tr.replaceChildren();
-    reportInfo(com)
-        .then((infoDingo) => {
-            //console.log(infoDingo)
-            console.log(serial)
-            // let td = document.createElement('td');
-            // td.textContent = path;
-            // tr.appendChild(td);
-            // for (let i = 1; i < infoDingo.length - 1; i++) {
-            //     td = document.createElement('td');
-            //     td.textContent = infoDingo[i];
-            //     tr.appendChild(td);
-            // }
-
-        })
-        .then({
-        })
-        .catch(err => {
-            document.getElementById('error').textContent = err.message;
-            console.log(err);
-        });
-}
-
-function reportInfo(com) {
-    return new Promise((resolve, reject) => {
-        openPort(com)
-            //.then(() => wait(3000))
-            .then(() => getDingoInfo(com))
-            .then(res => parseDingoInitData(res))
-            .then(res => {
-                com.infoDingo = res;
-                return wait(5000);
-            })
-            .then(() => getAlcogol(com))
-            .then(res => {
-                if (res.err) {
-
-                } else
-                    com.analyzes = res;
-                return wait(5000);
-            })
-            .then(() => deleteDingo(com))
-            .then(() => {
-                com.serialPort && com.serialPort.close();
-                resolve(com.infoDingo);
-            })
-            .catch(err => {
-                com.serialPort && com.serialPort.close();
-                reject(err);
-            });
-    });
+/* пример синхронного цикла
+async function test1(i){ await wait(1000); console.log(i);}
+async function test(){
+    i=0;
+    while(i<10)
+    {
+        await test1(i);
+        i++;
+    }
 }
 */
-async function dingoProcess(com) {
+
+async function dingoProcess(com,tr) {
     try {
         await openPort(com);
         let res = await getDingoInfo(com);
         com.infoDingo = await parseDingoInitData(res);
         com.analyzes = [];
-        //await wait(5000);
-        res = await getAlcogol(com);
+
+        let td = document.createElement('td');
+        td.textContent = com.path;
+        tr.appendChild(td);
+
+        for (let i = 2; i < 4; i++) {
+            td = document.createElement('td');
+            td.textContent = com.infoDingo[i]; 
+            tr.appendChild(td);
+        }
+        //=====================================
+        td = document.createElement('td');
+        tr.appendChild(td);
+        res = await getAlcogol(com,td);
         if (res.err) {
             com.analyzes.push("Ошибка пробувки");
+            td.textContent = "Ошибка пробувки"; 
         } else{ 
-            com.analyzes.push(res.analyzes);
+            com.analyzes.push(res.analyzes);           
+            td.textContent = res.analyzes; 
         }
         await wait(5000);
         await deleteDingo(com)
@@ -240,7 +210,7 @@ function openPort(com) {
 }
 
 
-async function getDingoInfo(com) {
+function getDingoInfo(com) {
     return new Promise((resolve, reject) => {
         com.read = (data) => {
             let str = data.toString('utf8').split('\n')
@@ -266,17 +236,17 @@ async function getDingoInfo(com) {
     });
 };
 
-function getAlcogol(com) {
+function getAlcogol(com,td) {
     return new Promise((resolve, reject) => {
         com.read = (data) => {
             let str = data.toString('utf8').split(/[\n|:]+/)
             console.log('getAlcogol: ', str)
             switch (str[0]) {
-                case `$WAIT`: { console.log(`$WAIT`, str) } break;
-                case `$STANBY`: { console.log(`$STANBY`, str) } break;
-                case `$BREATH`: { console.log(`$BREATH`, str) } break;
+                case `$WAIT`: { td.textContent = `$WAIT` } break;
+                case `$STANBY`: { td.textContent = `$STANBY` } break;
+                case `$BREATH`: { td.textContent = `$BREATH` } break;
                 case '$FLOW,ERR': {
-                    console.log(`$FLOW,ERR`, str)
+                    td.textContent = `$FLOW,ERR`;
                     com.read = defaultRead;
                     resolve({ err: true, analyzes: str });
                 } break;
