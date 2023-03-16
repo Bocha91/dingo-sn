@@ -45,6 +45,14 @@ const ports = [
 ];
 */
 //test();
+
+function main() {
+    let idPort = document.getElementById('ports');
+    let div = document.createElement('input');
+
+}
+main();
+
 listSerialPorts()
 
 async function listSerialPorts() {
@@ -105,7 +113,7 @@ function stop(com, tr) {
 async function start1(com, tr) {
     tr.replaceChildren();
     try {
-        let infoDingo = await dingoProcess(com,tr);
+        let infoDingo = await dingoProcess(com, tr);
         console.log(infoDingo)
         console.log(serial)
 
@@ -145,9 +153,10 @@ async function test(){
 }
 */
 
-async function dingoProcess(com,tr) {
+async function dingoProcess(com, tr) {
     try {
         await openPort(com);
+        await waitRedy(com);
         let res = await getDingoInfo(com);
         com.infoDingo = await parseDingoInitData(res);
         com.analyzes = [];
@@ -158,21 +167,35 @@ async function dingoProcess(com,tr) {
 
         for (let i = 2; i < 4; i++) {
             td = document.createElement('td');
-            td.textContent = com.infoDingo[i]; 
+            td.textContent = com.infoDingo[i];
             tr.appendChild(td);
         }
-        //=====================================
-        td = document.createElement('td');
-        tr.appendChild(td);
-        res = await getAlcogol(com,td);
-        if (res.err) {
-            com.analyzes.push("Ошибка пробувки");
-            td.textContent = "Ошибка пробувки"; 
-        } else{ 
-            com.analyzes.push(res.analyzes);           
-            td.textContent = res.analyzes; 
+
+        for (let i = 0; i < 12; i++) {
+            console.log('i='+i)
+            //=====================================            
+            td = document.createElement('td');
+            tr.appendChild(td);
+            let repit = 3;
+            do {
+                await waitRedy(com);
+                res = await getAlcogol(com, td);
+                if (res.err) {
+                    if (--repit > 0) {
+                        td.textContent = "Ошибка пробувки\nОст.повторов=" + (repit);
+                        //await wait(12000);
+                    } else td.textContent = "Ошибка пробувки";
+                } else {
+                    td.textContent = res.analyzes;
+                    break
+                }
+            } while (repit > 0)
+            com.analyzes.push(td.textContent);
+            await waitRedy(com);
+            await wait(3000);
+            //=====================================
+
         }
-        await wait(5000);
         await deleteDingo(com)
         com.serialPort && com.serialPort.close();
         return com.infoDingo;
@@ -209,6 +232,23 @@ function openPort(com) {
     });
 }
 
+function waitRedy(com) {
+    return new Promise((resolve, reject) => {
+        com.read = (data) => {
+            let str = data.toString('utf8').split('\n')
+            console.log('getDingoInfo: ', str)
+            switch (str[0]) {
+                case `$END`: {
+                    com.read = defaultRead;
+                    resolve(str);
+                } break;
+                default:
+                    break;
+            }
+        };
+    });
+};
+
 
 function getDingoInfo(com) {
     return new Promise((resolve, reject) => {
@@ -236,7 +276,8 @@ function getDingoInfo(com) {
     });
 };
 
-function getAlcogol(com,td) {
+function getAlcogol(com, td) {
+    console.log('start getAlcogol')
     return new Promise((resolve, reject) => {
         com.read = (data) => {
             let str = data.toString('utf8').split(/[\n|:]+/)
@@ -259,6 +300,7 @@ function getAlcogol(com,td) {
                     break;
             }
         };
+        console.log('send getAlcogol')
         com.serialPort.write("$STARTSENTECH\r\n", err => {
             if (err) {
                 reject(err);
