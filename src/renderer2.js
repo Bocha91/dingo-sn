@@ -5,7 +5,7 @@ const { DelimiterParser } = require('@serialport/parser-delimiter')
 const EventEmitter = require('events');
 
 //const TITLE = ['порт', 'модель', 'SN', 'версия', 'поверка', 'калибровка', 'не считано', 'проведено анализов'];
-const TITLE = ['порт', 'SN', 'версия', '№1', '№2', '№3', '№4', '№5', '№6', '№7', '№8', '№9', '№10', '№11', '№12'];
+const TITLE = ['порт', 'SN', 'версия','Текущее Время', '№1', '№2', '№3', '№4', '№5', '№6', '№7', '№8', '№9', '№10', '№11', '№12'];
 var serial;
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -117,20 +117,6 @@ async function start1(com, tr) {
         console.log(infoDingo)
         console.log(serial)
 
-        // let td = document.createElement('td');
-        // td.textContent = com.path;
-        // tr.appendChild(td);
-
-        // for (let i = 2; i < 4; i++) {
-        //     td = document.createElement('td');
-        //     td.textContent = com.infoDingo[i]; 
-        //     tr.appendChild(td);
-        // }
-        // for (const analyzes of com.analyzes) {
-        //     td = document.createElement('td');
-        //     td.textContent = analyzes; 
-        //     tr.appendChild(td);
-        // }
     } catch (err) {
         //document.getElementById('error').textContent = err.message;
         let divErr = document.getElementById('error')
@@ -140,18 +126,6 @@ async function start1(com, tr) {
         console.log(err);
     };
 }
-
-/* пример синхронного цикла
-async function test1(i){ await wait(1000); console.log(i);}
-async function test(){
-    i=0;
-    while(i<10)
-    {
-        await test1(i);
-        i++;
-    }
-}
-*/
 
 async function dingoProcess(com, tr) {
     try {
@@ -171,6 +145,30 @@ async function dingoProcess(com, tr) {
             tr.appendChild(td);
         }
 
+        await waitRedy(com);
+
+        td = document.createElement('td');
+        td.style.border = "0px"
+        td.style.padding = "0px"
+        tr.appendChild(td);       
+        let tr1 = document.createElement('tr');
+        let td1 = document.createElement('td');
+        res = new Date();
+        let date = res.toLocaleString('ru-RU', { year: 'numeric', month: 'numeric', day: 'numeric' });
+        com.date = `${date.split(".").reverse().join("-")},${res.toLocaleTimeString()}`;// получить в том-же формате 
+        td1.textContent = com.date;
+        tr1.appendChild(td1);
+        td.appendChild(tr1);
+
+        res = await getTime(com)
+        com.dateDingo = res;
+        tr1 = document.createElement('tr');
+        td1 = document.createElement('td');
+        td1.textContent = res;
+        tr1.appendChild(td1);
+        td.appendChild(tr1);
+
+
         for (let i = 0; i < 12; i++) {
             console.log('i='+i)
             //=====================================            
@@ -183,7 +181,6 @@ async function dingoProcess(com, tr) {
                 if (res.err) {
                     if (--repit > 0) {
                         td.textContent = "Ошибка пробувки\nОст.повторов=" + (repit);
-                        //await wait(12000);
                     } else td.textContent = "Ошибка пробувки";
                 } else {
                     td.textContent = res.analyzes;
@@ -192,7 +189,7 @@ async function dingoProcess(com, tr) {
             } while (repit > 0)
             com.analyzes.push(td.textContent);
             await waitRedy(com);
-            await wait(3000);
+            //await wait(3000);
             //=====================================
 
         }
@@ -236,7 +233,7 @@ function waitRedy(com) {
     return new Promise((resolve, reject) => {
         com.read = (data) => {
             let str = data.toString('utf8').split('\n')
-            console.log('getDingoInfo: ', str)
+            console.log(`waitRedy(${com.path}): `, str)
             switch (str[0]) {
                 case `$END`: {
                     com.read = defaultRead;
@@ -251,17 +248,25 @@ function waitRedy(com) {
 
 
 function getDingoInfo(com) {
+    let res = [];
     return new Promise((resolve, reject) => {
         com.read = (data) => {
+            //console.log(data);
             let str = data.toString('utf8').split('\n')
-            console.log('getDingoInfo: ', str)
+            console.log(`getDingoInfo(${com.path}):`,str)
             switch (str[0]) {
-                case `#i7`: {
-                    console.log(`#i7`, str);
+                case `$END`: {
+                    if(res.length == 0){ break; }// если вдруг первым придёт $END то игнорим его
                     com.read = defaultRead;
-                    resolve(str);
+                    resolve(res);
                 } break;
+                // case `#i7`: {
+                //     console.log(`#i7`, str);
+                //     com.read = defaultRead;
+                //     resolve(str);
+                // } break;
                 default:
+                    res.push(...str);// объединяем массивы строк
                     break;
             }
         };
@@ -270,22 +275,27 @@ function getDingoInfo(com) {
                 reject(err);
             }
             else {
-                setTimeout(() => reject({ message: 'Алкотестер не отвечает по ' + com.path }), 2000)
+                setTimeout(() => reject({ message: 'Алкотестер не отвечает по ' + com.path }), 3000)
             }
         });
     });
 };
 
 function getAlcogol(com, td) {
-    console.log('start getAlcogol')
+    //console.log('start getAlcogol')
     return new Promise((resolve, reject) => {
         com.read = (data) => {
             let str = data.toString('utf8').split(/[\n|:]+/)
-            console.log('getAlcogol: ', str)
+            console.log(`getAlcogol(${com.path}): `, str)
             switch (str[0]) {
-                case `$WAIT`: { td.textContent = `$WAIT` } break;
-                case `$STANBY`: { td.textContent = `$STANBY` } break;
-                case `$BREATH`: { td.textContent = `$BREATH` } break;
+                case `$WAIT`: { td.textContent = `$WAIT` } break; // ждите
+                case `$STANBY`: { td.textContent = `$STANBY` } break;  //Готов
+                case `$BREATH`: { td.textContent = `$BREATH` } break;  // Анализ
+                case '$SENSOR,ERR': {
+                    td.textContent = `$SENSOR,ERR`;
+                    com.read = defaultRead;
+                    resolve({ err: true, analyzes: str });
+                } break;
                 case '$FLOW,ERR': {
                     td.textContent = `$FLOW,ERR`;
                     com.read = defaultRead;
@@ -302,6 +312,32 @@ function getAlcogol(com, td) {
         };
         console.log('send getAlcogol')
         com.serialPort.write("$STARTSENTECH\r\n", err => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                //setTimeout(() => reject({ message: 'Алкотестер не отвечает по ' + com.path }), 2000)
+            }
+        });
+    });
+};
+
+function getTime(com) {
+    return new Promise((resolve, reject) => {
+        com.read = (data) => {
+            let str = data.toString('utf8').split('\n')
+            console.log(`getTime(${com.path}): `, str)
+            switch (str[0][0]) {
+                case '#': {
+                    //console.log('#', str);
+                    com.read = defaultRead;
+                    resolve(str[0].slice(1)); // отбросить '#'
+                } break;
+                default:
+                    break;
+            }
+        };
+        com.serialPort.write("$RECALL\r\n", err => {
             if (err) {
                 reject(err);
             }
