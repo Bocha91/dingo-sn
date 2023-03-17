@@ -5,7 +5,7 @@ const { DelimiterParser } = require('@serialport/parser-delimiter')
 const EventEmitter = require('events');
 
 //const TITLE = ['порт', 'модель', 'SN', 'версия', 'поверка', 'калибровка', 'не считано', 'проведено анализов'];
-const TITLE = ['порт', 'SN', 'версия','Текущее Время', '№1', '№2', '№3', '№4', '№5', '№6', '№7', '№8', '№9', '№10', '№11', '№12'];
+const TITLE = ['порт', 'SN', 'версия', 'Текущее Время', '№1', '№2', '№3', '№4', '№5', '№6', '№7', '№8', '№9', '№10', '№11', '№12'];
 var serial;
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -150,7 +150,7 @@ async function dingoProcess(com, tr) {
         td = document.createElement('td');
         td.style.border = "0px"
         td.style.padding = "0px"
-        tr.appendChild(td);       
+        tr.appendChild(td);
         let tr1 = document.createElement('tr');
         let td1 = document.createElement('td');
         res = new Date();
@@ -170,7 +170,7 @@ async function dingoProcess(com, tr) {
 
 
         for (let i = 0; i < 12; i++) {
-            console.log('i='+i)
+            console.log('i=' + i)
             //=====================================            
             td = document.createElement('td');
             tr.appendChild(td);
@@ -178,14 +178,39 @@ async function dingoProcess(com, tr) {
             do {
                 await waitRedy(com);
                 res = await getAlcogol(com, td);
-                if (res.err) {
-                    if (--repit > 0) {
-                        td.textContent = "Ошибка пробувки\nОст.повторов=" + (repit);
-                    } else td.textContent = "Ошибка пробувки";
-                } else {
-                    td.textContent = res.analyzes;
-                    break
+                switch (res.err) {
+                    case 3:
+                    case 2:
+                        //td.textContent = res.analyzes;
+                        repit = 0; i = 13; // этот динго сломан, отключаем
+                        break
+                    case 1:
+                        if (--repit > 0) {
+                            td.textContent = "Ошибка пробувки\nОст.повторов=" + (repit);
+                        } else
+                            td.textContent = res.analyzes;
+                        break
+                    case 4:
+                        // эта музыка будет вечной
+                        td.textContent = res.analyzes;
+                        break
+                    case 0:
+                        td.textContent = res.analyzes;
+                        repit = 0;
+                        break
+                    default:
+                        td.textContent = "???????";
+                        repit = 0; i = 13; // я не знаю что это
+                        break;
                 }
+                // if (res.err) {
+                //     if (--repit > 0) {
+                //         td.textContent = "Ошибка пробувки\nОст.повторов=" + (repit);
+                //     } else td.textContent = "Ошибка пробувки";
+                // } else {
+                //     td.textContent = res.analyzes;
+                //     break
+                // }
             } while (repit > 0)
             com.analyzes.push(td.textContent);
             await waitRedy(com);
@@ -253,10 +278,10 @@ function getDingoInfo(com) {
         com.read = (data) => {
             //console.log(data);
             let str = data.toString('utf8').split('\n')
-            console.log(`getDingoInfo(${com.path}):`,str)
+            console.log(`getDingoInfo(${com.path}):`, str)
             switch (str[0]) {
                 case `$END`: {
-                    if(res.length == 0){ break; }// если вдруг первым придёт $END то игнорим его
+                    if (res.length == 0) { break; }// если вдруг первым придёт $END то игнорим его
                     com.read = defaultRead;
                     resolve(res);
                 } break;
@@ -288,25 +313,38 @@ function getAlcogol(com, td) {
             let str = data.toString('utf8').split(/[\n|:]+/)
             console.log(`getAlcogol(${com.path}): `, str)
             switch (str[0]) {
-                case `$WAIT`: { td.textContent = `$WAIT` } break; // ждите
-                case `$STANBY`: { td.textContent = `$STANBY` } break;  //Готов
-                case `$BREATH`: { td.textContent = `$BREATH` } break;  // Анализ
-                case '$SENSOR,ERR': {
-                    td.textContent = `$SENSOR,ERR`;
+                case '$WAIT': { td.textContent = 'ЖДИТЕ' } break;
+                case '$STANBY': { td.textContent = 'ГОТОВ' } break;
+                case '$BREATH': { td.textContent = 'АНАЛИЗ' } break;
+                case '$CALIBRATION': { td.textContent = 'Требуется калибровка' } break;
+                case '$MODULE,ERR': {
+                    td.textContent = 'Неисправен модуль';
                     com.read = defaultRead;
-                    resolve({ err: true, analyzes: str });
+                    resolve({ err: 3, analyzes: str });
+                } break;
+                case '$SENSOR,ERR': {
+                    td.textContent = 'Ошибка сенсора, замените сенсор';
+                    com.read = defaultRead;
+                    resolve({ err: 2, analyzes: str });
                 } break;
                 case '$FLOW,ERR': {
-                    td.textContent = `$FLOW,ERR`;
+                    td.textContent = 'Ошибка продувки';
                     com.read = defaultRead;
-                    resolve({ err: true, analyzes: str });
+                    resolve({ err: 1, analyzes: str });
+                } break;
+                case '$TIME,OUT': {
+                    td.textContent = 'Таймаут, да поебать!';
+                    com.read = defaultRead;
+                    resolve({ err: 4, analyzes: str });
                 } break;
                 case `$R`: {
                     console.log(`$R:`, str);
                     com.read = defaultRead;
-                    resolve({ err: false, analyzes: str[1].split(',')[0] });
+                    resolve({ err: 0, analyzes: str[1].split(',')[0] });
                 } break;
-                default:
+                default: // то чего неможет быть
+                    console.log(`getAlcogol(${com.path}): `, str)
+                    td.textContent = str;
                     break;
             }
         };
