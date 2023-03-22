@@ -4,6 +4,12 @@ body {
   margin: auto;
   /* max-width: 38rem; */
   padding: 1rem;
+  /*Делаю body по высоте окна*/
+  /* margin: 0; */
+  /* padding: 0; */
+  border: 1px solid grey;
+  box-sizing: border-box;
+  min-height: 100vh;
 }
 table {
   border: 1px solid grey;

@@ -2,13 +2,19 @@
 const { SerialPort } = require('serialport')
 const { DelimiterParser } = require('@serialport/parser-delimiter')
 //const { RegexParser } = require('@serialport/parser-regex')
-const EventEmitter = require('events');
+//const EventEmitter = require('events');
+const fs = require('fs');
+const path = require('path');
+//const url = require('url')
+const os = require("os")
 
 //const TITLE = ['порт', 'модель', 'SN', 'версия', 'поверка', 'калибровка', 'не считано', 'проведено анализов'];
 const TITLE = ['порт', 'SN', 'версия', 'Текущее Время', '№1', '№2', '№3', '№4', '№5', '№6', '№7', '№8', '№9', '№10', '№11', '№12'];
 var serial;
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// console.log(os.homedir())
 
 /*
 const ports = [
@@ -46,16 +52,96 @@ const ports = [
 */
 //test();
 
-function main() {
-    let idPort = document.getElementById('ports');
-    let div = document.createElement('input');
-
-}
 main();
 
-listSerialPorts()
+function save(fullName){
+    console.log("save:",fullName);
 
-async function listSerialPorts() {
+    let str = 'SN, версия, Время системы, Время динго, №1, №2, №3, №4, №5, №6, №7, №8, №9, №10, №11, №12\n';
+    for( let i=0; i< serial.length; i++){
+        str += serial[i].infoDingo[2];
+        str +=", "
+        str += serial[i].infoDingo[3];
+        str +=", "
+        str += serial[i].date;
+        str +=", "
+        str += serial[i].dateDingo;
+
+        for(let j=0; j<serial[i].analyzes.length;j++ )
+        {
+            str +=", "
+            str += serial[i].analyzes[j]
+        }
+        str +="\n"
+    }
+
+    fs.writeFile(fullName, str, function(error){
+        if(error) throw error; // ошибка чтения файла, если есть
+        let span = document.getElementById('span');
+        span.textContent = ` Сохранено в ${fullName}`;  
+        console.log('Данные успешно записаны записать файл');
+     });
+}
+
+
+function saveFiles(){
+    console.log("input:",this);
+    // console.log(url.format({
+    //     pathname: file.path,
+    //     protocol: 'file:',
+    //     slashes: true
+    //   }));
+
+    //const input = document.querySelector('input');
+    //console.log(input);
+
+    save(this.files[0].path)
+}
+
+function dragenter(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    //console.log("dragenter")
+  }
+  
+  function dragover(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    //console.log("dragover")
+  }
+
+  function drop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log("drop",e)
+    var files = e.dataTransfer.files;
+     console.log(files[0].path);
+     save(files[0].path)
+  }
+
+
+async function main() {
+    // let input = document.createElement('input'); 
+    // document.getElementById('file').appendChild(input);
+    // input.type = "file"
+    // input.addEventListener('change', saveFiles);
+
+
+    let dropbox = document.getElementsByTagName("body")[0];
+    dropbox.addEventListener("dragenter", dragenter, false);
+    dropbox.addEventListener("dragover", dragover, false);
+    dropbox.addEventListener("drop", drop, false);
+    
+    let button = document.createElement('button');
+    let file = document.getElementById('file');
+    file.appendChild(button);
+    button.textContent = `Сохранить в папку "Documents" файл "Save.txt"`;
+    button.onclick = ()=> save(`${os.homedir()}\\Documents\\Save.txt`)
+    let span = document.createElement('span');
+    span.id = "span"
+    // span.textContent = ` Сохранить в папку "Documents" файл "Save.txt"`;
+    file.appendChild(span);
+
     await SerialPort.list().then((ports, err) => {
         if (err) {
             document.getElementById('error').textContent = err.message
@@ -386,64 +472,6 @@ function getTime(com) {
     });
 };
 
-
-/*
-function getDingoInfo(com) {
-    // com.read = (data)=>{
-    //     let str = data.toString('utf8')
-    //     let E200 = str.split( /[\r|:]+/ )
-    //     console.log('getDingoInfo: ', E200)
-    //     com.eventEmitter.emit(E200[0], E200);
-    // };
-    return new Promise((resolve, reject) => {
-        com.serialPort.write("$i0000\r\n", err => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                com.eventEmitter.once(`#i7`, (analyzes) => {
-                    console.log(`#i7`)
-                    resolve(analyzes);
-                });
-                setTimeout(() => reject({ message: 'Алкотестер не отвечает по ' + com.path }), 2000)
-            }
-        });
-    });
-};
-
-
-function getAlcogol(com) {
-    com.read = (data) => {
-        let str = data.toString('utf8')
-        let E200 = str.split(/[\n|:]+/)
-        console.log('getAlcogol: ', E200)
-        com.eventEmitter.emit(E200[0], E200);
-    };
-    return new Promise((resolve, reject) => {
-        com.serialPort.write("$STARTSENTECH\r\n", err => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                com.eventEmitter.on(`$WAIT`, (analyzes) => { console.log(`$WAIT`, analyzes) })
-                com.eventEmitter.on(`$STANBY`, (analyzes) => { console.log(`$STANBY`, analyzes) })
-                com.eventEmitter.on(`$BREATH`, (analyzes) => { console.log(`$BREATH`, analyzes) })
-                com.eventEmitter.on('$FLOW,ERR', (analyzes) => {
-                    console.log(`$FLOW,ERR`, analyzes)
-                    resolve({ err: true, analyzes: analyzes });
-                })
-
-                com.eventEmitter.once(`$R`, (analyzes) => {
-                    console.log(`$R:`, analyzes);
-                    resolve({ err: false, analyzes: analyzes });
-                });
-                //setTimeout(() => reject({ message: 'Алкотестер не отвечает по ' + com.path }), 2000)
-            }
-        });
-    });
-};
-
-*/
 
 
 function deleteDingo(com) {
