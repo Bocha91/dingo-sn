@@ -83,7 +83,7 @@ function save(fullName){
      });
 }
 
-
+/*
 function saveFiles(){
     console.log("input:",this);
     // console.log(url.format({
@@ -97,7 +97,7 @@ function saveFiles(){
 
     save(this.files[0].path)
 }
-
+*/
 function dragenter(e) {
     e.stopPropagation();
     e.preventDefault();
@@ -153,7 +153,7 @@ async function main() {
         //console.log(JSON.stringify(ports));
 
         if (ports.length === 0) {
-            document.getElementById('error').textContent = 'Порты не обнаружены, Ctr+R просканить ещё'
+            document.getElementById('error').textContent = 'Порты не обнаружены...'
         }
 
         serial = ports;
