@@ -57,7 +57,7 @@ main();
 function save(fullName){
     console.log("save:",fullName);
 
-    let str = 'SN, версия, Время системы, Время динго, №1, №2, №3, №4, №5, №6, №7, №8, №9, №10, №11, №12\n';
+    let str = 'SN,Версия,Дата в компьютере,Время в компьютере,Дата в Динго,Время в Динго, №1, №2, №3, №4, №5, №6, №7, №8, №9, №10, №11, №12\n';
     for( let i=0; i< serial.length; i++){
         str += serial[i].infoDingo[2];
         str +=", "
@@ -135,8 +135,8 @@ async function main() {
     let button = document.createElement('button');
     let file = document.getElementById('file');
     file.appendChild(button);
-    button.textContent = `Сохранить в папку "Documents" файл "Save.txt"`;
-    button.onclick = ()=> save(`${os.homedir()}\\Documents\\Save.txt`)
+    button.textContent = `Сохранить в папку "Documents" файл "Save.csv"`;
+    button.onclick = ()=> save(`${os.homedir()}\\Documents\\Save.csv`)
     let span = document.createElement('span');
     span.id = "span"
     // span.textContent = ` Сохранить в папку "Documents" файл "Save.txt"`;
