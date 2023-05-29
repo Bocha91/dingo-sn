@@ -142,7 +142,7 @@ async function main() {
     // span.textContent = ` Сохранить в папку "Documents" файл "Save.txt"`;
     file.appendChild(span);
 
-    await SerialPort.list().then((ports, err) => {
+    await SerialPort.list().then( async (ports, err) => {
         if (err) {
             document.getElementById('error').textContent = err.message
             return
@@ -188,6 +188,7 @@ async function main() {
             idTab.appendChild(tr);
 
             start1(com, tr);
+            await wait(1000);
         }
     })
 }
@@ -315,7 +316,7 @@ async function dingoProcess(com, tr) {
 
 function defaultRead(data) {
     let str = data.toString('utf8').split('\n')
-    console.log('read: ', str)
+    //console.log('read: ', str)
 };
 
 function openPort(com) {
