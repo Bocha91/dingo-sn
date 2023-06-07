@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Tray } = require('electron');
 const path = require('path');
 const url = require('url')
 
@@ -9,9 +9,11 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    //icon: 'images/favicon.ico',
     width: 850,
     height: 600,
     backgroundColor: "#ccc",
@@ -19,8 +21,12 @@ const createWindow = () => {
       nodeIntegration: true, // to allow require
       contextIsolation: false, // allow use with Electron 12+
       preload: path.join(__dirname, 'preload.js'),
-    },
+    }
   });
+
+  //const appIcon = new Tray('images/favicon.ico');
+  //console.log(appIcon, mainWindow)
+
 
   // and load the index.html of the app.
   //mainWindow.loadFile(path.join(__dirname, 'index.html'));
@@ -30,11 +36,12 @@ const createWindow = () => {
     slashes: true
   }))
 
-
+  if(false)
   // Open the DevTools.
   mainWindow.webContents.openDevTools({
     mode: "undocked"  /*'detach'*/
   });
+
 };
 
 // This method will be called when Electron has finished

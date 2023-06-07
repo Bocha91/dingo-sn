@@ -15,4 +15,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('serialport-version').innerText = require('serialport/package').version
+    document.getElementById('app-version').innerText = require('../package').version
+    //window.__dirname
+    //process.versions.app
+    //require('serialport/package').version
+
   })

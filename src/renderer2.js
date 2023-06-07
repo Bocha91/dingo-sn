@@ -54,33 +54,32 @@ const ports = [
 
 main();
 
-function save(fullName){
-    console.log("save:",fullName);
+function save(fullName) {
+    console.log("save:", fullName);
 
     let str = 'SN,Версия,Дата в компьютере,Время в компьютере,Дата в Динго,Время в Динго, №1, №2, №3, №4, №5, №6, №7, №8, №9, №10, №11, №12\n';
-    for( let i=0; i< serial.length; i++){
+    for (let i = 0; i < serial.length; i++) {
         str += serial[i].infoDingo[2];
-        str +=", "
+        str += ", "
         str += serial[i].infoDingo[3];
-        str +=", "
+        str += ", "
         str += serial[i].date;
-        str +=", "
+        str += ", "
         str += serial[i].dateDingo;
 
-        for(let j=0; j<serial[i].analyzes.length;j++ )
-        {
-            str +=", "
+        for (let j = 0; j < serial[i].analyzes.length; j++) {
+            str += ", "
             str += serial[i].analyzes[j]
         }
-        str +="\n"
+        str += "\n"
     }
 
-    fs.writeFile(fullName, str, function(error){
-        if(error) throw error; // ошибка чтения файла, если есть
+    fs.writeFile(fullName, str, function (error) {
+        if (error) throw error; // ошибка чтения файла, если есть
         let span = document.getElementById('span');
-        span.textContent = ` Сохранено в ${fullName}`;  
+        span.textContent = ` Сохранено в ${fullName}`;
         console.log('Данные успешно записаны записать файл');
-     });
+    });
 }
 
 /*
@@ -102,22 +101,22 @@ function dragenter(e) {
     e.stopPropagation();
     e.preventDefault();
     //console.log("dragenter")
-  }
-  
-  function dragover(e) {
+}
+
+function dragover(e) {
     e.stopPropagation();
     e.preventDefault();
     //console.log("dragover")
-  }
+}
 
-  function drop(e) {
+function drop(e) {
     e.stopPropagation();
     e.preventDefault();
-    console.log("drop",e)
+    console.log("drop", e)
     var files = e.dataTransfer.files;
-     console.log(files[0].path);
-     save(files[0].path)
-  }
+    console.log(files[0].path);
+    save(files[0].path)
+}
 
 
 async function main() {
@@ -131,18 +130,18 @@ async function main() {
     dropbox.addEventListener("dragenter", dragenter, false);
     dropbox.addEventListener("dragover", dragover, false);
     dropbox.addEventListener("drop", drop, false);
-    
+
     let button = document.createElement('button');
     let file = document.getElementById('file');
     file.appendChild(button);
     button.textContent = `Сохранить в папку "Documents" файл "Save.csv"`;
-    button.onclick = ()=> save(`${os.homedir()}\\Documents\\Save.csv`)
+    button.onclick = () => save(`${os.homedir()}\\Documents\\Save.csv`)
     let span = document.createElement('span');
     span.id = "span"
     // span.textContent = ` Сохранить в папку "Documents" файл "Save.txt"`;
     file.appendChild(span);
 
-    await SerialPort.list().then( async (ports, err) => {
+    await SerialPort.list().then(async (ports, err) => {
         if (err) {
             document.getElementById('error').textContent = err.message
             return
@@ -218,8 +217,15 @@ async function dingoProcess(com, tr) {
     try {
         await openPort(com);
         await waitRedy(com);
-        let res = await getDingoInfo(com);
-        com.infoDingo = await parseDingoInitData(res);
+
+        let res={error:true};
+        for(let c=5; (c>0) && (res.error === true); --c )
+        {
+            res = await getDingoInfo(com);
+            if(res.error === true) await wait(1000);
+        }
+
+        com.infoDingo = await parseDingoInitData(res.res);
         com.analyzes = [];
 
         let td = document.createElement('td');
@@ -358,6 +364,15 @@ function waitRedy(com) {
     });
 };
 
+function parseDingoInitData(data) {
+    return new Promise((resolve, reject) => {
+        if (data.length == 10) {
+            data[2] += data[3];
+            data.splice(3, 1);
+        }
+        resolve(data);
+    })
+};
 
 function getDingoInfo(com) {
     let res = [];
@@ -370,7 +385,9 @@ function getDingoInfo(com) {
                 case `$END`: {
                     if (res.length == 0) { break; }// если вдруг первым придёт $END то игнорим его
                     com.read = defaultRead;
-                    resolve(res);
+                    if (res[2] == 'TANBY') resolve({ error: true, res: res });
+                    //if (res[2] == 'ERIAL') resolve({ error: true, res: res });
+                    resolve({ error: false, res: res });
                 } break;
                 // case `#i7`: {
                 //     console.log(`#i7`, str);
@@ -487,12 +504,3 @@ function deleteDingo(com) {
         });
     });
 };
-function parseDingoInitData(data) {
-    return new Promise((resolve, reject) => {
-        if (data.length == 10) {
-            data[2] += data[3];
-            data.splice(3, 1);
-        }
-        resolve(data);
-    })
-}
